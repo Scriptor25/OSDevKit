@@ -24,9 +24,26 @@
 #define VGA_COLOR(FG, BG) ((FG) | ((BG) << 4))
 #define VGA_CHAR(CHAR, COL) (((uint16_t)CHAR) | (((uint16_t)COL) << 8))
 
+static unsigned vga_ptr = 0;
+
+void putchar(uint8_t c)
+{
+    ((uint16_t *)VGA_BUFFER)[vga_ptr++] = VGA_CHAR(c, VGA_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLUE));
+}
+
+int puts(const char *str)
+{
+    int n = 0;
+    for (char *ptr = (char *)str; *ptr; ++ptr, ++n)
+        putchar(*ptr);
+    return n;
+}
+
 void main(void)
 {
-    uint16_t *buffer = (uint16_t *)VGA_BUFFER;
-    for (unsigned i = 0; i < VGA_WIDTH * VGA_HEIGHT; ++i)
-        buffer[i] = VGA_CHAR('#', VGA_COLOR(VGA_COLOR_LIGHT_GREY, VGA_COLOR_BLUE));
+    for (vga_ptr = 0; vga_ptr < VGA_WIDTH * VGA_HEIGHT; putchar(' '))
+        ;
+
+    vga_ptr = 0;
+    puts("Hello World!");
 }

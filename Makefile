@@ -1,23 +1,43 @@
-.PHONY: all
+AS = i686-elf-as
+GCC = i686-elf-gcc
+QEMU = qemu-system-i386
 
-all: build/os.iso
-	qemu-system-i386 -kernel build/os.bin
+GCCFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 
-build/boot.o: src/boot.s build
-	i686-elf-as src/boot.s -o build/boot.o
+SRC = src
+BUILD = build
 
-build/main.o: src/main.c build
-	i686-elf-gcc -c src/main.c -o build/main.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+OSNAME = scriptos
+KERNEL = $(BUILD)/kernel.bin
+ISO = $(BUILD)/$(OSNAME).iso
 
-build/os.bin: src/linker.ld build/boot.o build/main.o
-	i686-elf-gcc -T src/linker.ld -o build/os.bin -ffreestanding -O2 -nostdlib build/boot.o build/main.o -lgcc
-	grub-file --is-x86-multiboot build/os.bin
+ASMOBJS = $(patsubst $(SRC)/%.s,$(BUILD)/%.s.o,$(wildcard $(SRC)/*.s))
+COBJS = $(patsubst $(SRC)/%.c,$(BUILD)/%.c.o,$(wildcard $(SRC)/*.c))
+OBJS = $(ASMOBJS) $(COBJS)
 
-build/os.iso: build/os.bin src/grub.cfg
-	mkdir -p build/iso/boot/grub
-	cp build/os.bin build/iso/boot/os.bin
-	cp src/grub.cfg build/iso/boot/grub/grub.cfg
-	grub-mkrescue -o build/os.iso build/iso
+.PHONY: all clean
 
-build:
-	mkdir build
+all: $(ISO)
+	$(QEMU) -cdrom $(ISO)
+
+clean:
+	-rm -rf $(BUILD)
+
+$(BUILD):
+	mkdir -p $(BUILD)
+
+$(BUILD)/%.s.o: $(SRC)/%.s $(BUILD)
+	$(AS) $< -o $@
+
+$(BUILD)/%.c.o: $(SRC)/%.c $(BUILD)
+	$(GCC) -c $< -o $@ $(GCCFLAGS)
+
+$(KERNEL): $(SRC)/linker.ld $(OBJS)
+	$(GCC) -o $(KERNEL) -ffreestanding -O2 -nostdlib -T $^ -lgcc
+	grub-file --is-x86-multiboot2 $(KERNEL)
+
+$(ISO): $(KERNEL) $(SRC)/grub.cfg
+	mkdir -p $(BUILD)/iso/boot/grub
+	cp $(KERNEL) $(BUILD)/iso/boot/kernel.bin
+	cp $(SRC)/grub.cfg $(BUILD)/iso/boot/grub/grub.cfg
+	grub-mkrescue -o $(ISO) $(BUILD)/iso
