@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "*.csh": "coffeescript",
+        "*.csaw": "coffeescript",
+        "*.fsh": "hlsl",
+        "*.vsh": "hlsl",
+        "*.qs": "plaintext",
+        "*.qh": "plaintext",
+        "vga.h": "c"
+    }
+}

@@ -5,15 +5,19 @@ QEMU = qemu-system-i386
 GCCFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 
 SRC = src
+BOOTSRC = $(SRC)/boot
+KERNELSRC = $(SRC)/kernel
 BUILD = build
+BOOTBUILD = $(BUILD)/boot
+KERNELBUILD = $(BUILD)/kernel
 
 OSNAME = scriptos
 KERNEL = $(BUILD)/kernel.bin
 ISO = $(BUILD)/$(OSNAME).iso
 
-ASMOBJS = $(patsubst $(SRC)/%.s,$(BUILD)/%.s.o,$(wildcard $(SRC)/*.s))
-COBJS = $(patsubst $(SRC)/%.c,$(BUILD)/%.c.o,$(wildcard $(SRC)/*.c))
-OBJS = $(ASMOBJS) $(COBJS)
+BOOTOBJS = $(patsubst $(SRC)/%.s,$(BUILD)/%.o,$(wildcard $(BOOTSRC)/*.s))
+KERNELOBJS = $(patsubst $(SRC)/%.c,$(BUILD)/%.o,$(wildcard $(KERNELSRC)/*.c))
+OBJS = $(BOOTOBJS) $(KERNELOBJS)
 
 .PHONY: all clean
 
@@ -23,14 +27,17 @@ all: $(ISO)
 clean:
 	-rm -rf $(BUILD)
 
-$(BUILD):
-	mkdir -p $(BUILD)
+$(BOOTBUILD):
+	mkdir -p $(BOOTBUILD)
 
-$(BUILD)/%.s.o: $(SRC)/%.s $(BUILD)
+$(KERNELBUILD):
+	mkdir -p $(KERNELBUILD)
+
+$(BOOTBUILD)/%.o: $(BOOTSRC)/%.s $(BOOTBUILD)
 	$(AS) $< -o $@
 
-$(BUILD)/%.c.o: $(SRC)/%.c $(BUILD)
-	$(GCC) -c $< -o $@ $(GCCFLAGS)
+$(KERNELBUILD)/%.o: $(KERNELSRC)/%.c $(KERNELBUILD)
+	$(GCC) -c $< -o $@ $(GCCFLAGS) -I include
 
 $(KERNEL): $(SRC)/linker.ld $(OBJS)
 	$(GCC) -o $(KERNEL) -ffreestanding -O2 -nostdlib -T $^ -lgcc

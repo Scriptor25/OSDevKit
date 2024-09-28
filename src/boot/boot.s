@@ -1,22 +1,23 @@
+.extern _text_start
+.extern _data_end
+.extern _bss_end
+
 .set MAGIC,         0xE85250D6
 .set ARCHITECTURE,  0x00000000
 .set HEADER_LENGTH, multiboot_header_end - multiboot_header
 .set CHECKSUM,      -(MAGIC + ARCHITECTURE + HEADER_LENGTH)
 
 .section .multiboot
-.align 8
-
 multiboot_header:
+.align 8
 .long MAGIC
 .long ARCHITECTURE
 .long HEADER_LENGTH
 .long CHECKSUM
 
-mutliboot_end_tag:
-.word 0
-.word 0
-.long mutliboot_end_tag_end - mutliboot_end_tag
-mutliboot_end_tag_end:
+.align 8
+.long 0
+.long 8
 multiboot_header_end:
 
 .section .bss
