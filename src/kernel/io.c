@@ -1,6 +1,6 @@
 #include <scriptos/io.h>
 
-void outb(uint16_t port, uint8_t value)
+void outb(u16 port, u8 value)
 {
     asm volatile(
         "out %0, %1"
@@ -8,9 +8,9 @@ void outb(uint16_t port, uint8_t value)
         : "a"(value), "Nd"(port));
 }
 
-uint8_t inb(uint16_t port)
+u8 inb(u16 port)
 {
-    uint8_t value;
+    u8 value;
     asm volatile(
         "in %1, %0"
         : "=a"(value)

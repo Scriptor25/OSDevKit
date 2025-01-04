@@ -1,6 +1,7 @@
 AS = i686-elf-as
 GCC = i686-elf-gcc
 QEMU = qemu-system-i386
+CPP = i686-elf-cpp
 
 GCCFLAGS = -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 
@@ -19,9 +20,11 @@ BOOTOBJS = $(patsubst $(SRC)/%.s,$(BUILD)/%.o,$(wildcard $(BOOTSRC)/*.s))
 KERNELOBJS = $(patsubst $(SRC)/%.c,$(BUILD)/%.o,$(wildcard $(KERNELSRC)/*.c))
 OBJS = $(BOOTOBJS) $(KERNELOBJS)
 
-.PHONY: all clean
+.PHONY: build launch clean
 
-all: $(ISO)
+build: $(ISO)
+
+launch: $(ISO)
 	$(QEMU) -cdrom $(ISO)
 
 clean:
@@ -33,8 +36,11 @@ $(BOOTBUILD):
 $(KERNELBUILD):
 	mkdir -p $(KERNELBUILD)
 
-$(BOOTBUILD)/%.o: $(BOOTSRC)/%.s $(BOOTBUILD)
-	$(AS) $< -o $@
+$(BOOTBUILD)/%.o: $(BOOTBUILD)/%.s.pp
+	$(AS) $< -o $@ -I include
+
+$(BOOTBUILD)/%.s.pp: $(BOOTSRC)/%.s $(BOOTBUILD)
+	$(CPP) $< -o $@ -I include
 
 $(KERNELBUILD)/%.o: $(KERNELSRC)/%.c $(KERNELBUILD)
 	$(GCC) -c $< -o $@ $(GCCFLAGS) -I include
